@@ -15,6 +15,12 @@ enum case_behavior {
     CASE_SENSITIVE_RETRY_INSENSITIVE /* for future use */
 };
 
+enum column_behavior {
+  COLUMN_PRINT_NONE,
+  COLUMN_PRINT_FIRST,
+  COLUMN_PRINT_ALL
+};
+
 typedef struct {
     int ackmate;
     pcre *ackmate_dir_filter;
@@ -30,7 +36,7 @@ typedef struct {
     char *color_line_number;
     char *color_match;
     char *color_path;
-    int column;
+    enum column_behavior column;
     int context;
     int follow_symlinks;
     int invert_match;

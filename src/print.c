@@ -134,7 +134,7 @@ void print_file_matches(const char* path, const char* buf, const int buf_len, co
                     }
                 } else {
                     print_line_number(line, ':');
-                    if (opts.column) {
+                    if (opts.column == COLUMN_PRINT_FIRST || opts.column == COLUMN_PRINT_ALL) {
                         fprintf(out_fd, "%i:", (matches[last_printed_match].start - prev_line_offset) + 1);
                     }
 

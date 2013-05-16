@@ -53,7 +53,8 @@ Search options:\n\
 --color-line-number     Color codes for line numbers (Default: 1;33)\n\
 --color-match           Color codes for result match numbers (Default: 30;43)\n\
 --color-path            Color codes for path names (Default: 1;32)\n\
---column                Print column numbers in results\n\
+--column[=first|all]    Print column numbers in results (Default: first)\n\
+                        ('all' will output a line for every column)\n\
 --line-numbers          Print line numbers even for streams\n\
 -C --context [LINES]    Print lines before and after matches (Default: 2)\n\
 -D --debug              Ridiculous debugging (probably not useful)\n\
@@ -115,6 +116,7 @@ void init_options() {
     opts.color_path = ag_strdup(color_path);
     opts.color_match = ag_strdup(color_match);
     opts.color_line_number = ag_strdup(color_line_number);
+    opts.column = COLUMN_PRINT_NONE;
 }
 
 void cleanup_options() {
@@ -177,7 +179,7 @@ void parse_options(int argc, char **argv, char **base_paths[], char **paths[]) {
         { "color-path", required_argument, NULL, 0 },
         { "color-match", required_argument, NULL, 0 },
         { "color-line-number", required_argument, NULL, 0 },
-        { "column", no_argument, &opts.column, 1 },
+        { "column", optional_argument, NULL, 0 },
         { "context", optional_argument, NULL, 'C' },
         { "debug", no_argument, NULL, 'D' },
         { "depth", required_argument, NULL, 0 },
@@ -351,6 +353,15 @@ void parse_options(int argc, char **argv, char **base_paths[], char **paths[]) {
                 if (strcmp(longopts[opt_index].name, "ackmate-dir-filter") == 0) {
                     compile_study(&opts.ackmate_dir_filter, &opts.ackmate_dir_filter_extra, optarg, 0, 0);
                     break;
+                } else if (strcmp(longopts[opt_index].name, "column") == 0) {
+                    if (optarg == NULL || strcmp(optarg, "first") == 0) {
+                        opts.column = COLUMN_PRINT_FIRST;
+                    } else if (strcmp(optarg, "all") == 0) {
+                        opts.column = COLUMN_PRINT_ALL;
+                    } else {
+                        die("Unrecognized column option: %s", optarg);
+                    }
+                    break;
                 } else if (strcmp(longopts[opt_index].name, "depth") == 0) {
                     opts.max_search_depth = atoi(optarg);
                     break;
@@ -468,19 +479,15 @@ void parse_options(int argc, char **argv, char **base_paths[], char **paths[]) {
         opts.search_stream = 0;
     }
 
-    if (opts.print_heading == 0 || opts.print_break == 0) {
-        goto skip_group;
+    if (opts.print_heading != 0 && opts.print_break != 0) {
+        if (group) {
+            opts.print_heading = 1;
+            opts.print_break = 1;
+        } else {
+            opts.print_heading = 0;
+            opts.print_break = 0;
+        }
     }
-
-    if (group) {
-        opts.print_heading = 1;
-        opts.print_break = 1;
-    } else {
-        opts.print_heading = 0;
-        opts.print_break = 0;
-    }
-
-    skip_group:;
 
     if (opts.search_stream) {
         opts.print_break = 0;
